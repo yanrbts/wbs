@@ -51,7 +51,7 @@ class Module(cmd.Cmd):
         self.cp.green(f"{'Option':20}\t{'Value':20}")
         self.cp.green(f"{'--'*8:<20}\t{'--'*8:<20}")
         for k,v in self.parameters.items():
-            self.cp.yellow(f"{k:20}\t{v:20}")
+            self.cp.yellow(f"{k:20}\t{v:<20}")
         print("\n")
 
     def complete_set(self, text, line, begidx, endidx):
