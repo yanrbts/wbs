@@ -8,6 +8,7 @@ import os
 from .modules import *
 from .modules import module_list, all_modules
 from .core.utils import logo, CPrint, about, update
+from .core.utils.module import *
 
 
 completions = module_list()
@@ -28,19 +29,24 @@ class Main(cmd.Cmd):
         """Select module for modules"""
         if line in module_list():
 
-            module = globals()[line]
-            if hasattr(module, 'Main'):
-                module = module.Main()
-                module.prompt = f"wsf > {line} > "
-                module.cmdloop()
-            else:
-                self.cp.error(text=f"*** Module `{module}` not has `Main` class!")
+            # module = globals()[line]
+            # if hasattr(module, 'Main'):
+            #     module = module.Main()
+            #     module.prompt = f"wsf > {line} > "
+            #     module.cmdloop()
+            # else:
+            #     self.cp.error(text=f"*** Module `{module}` not has `Main` class!")
+
+            module = import_exploit("websploit.modules.{}".format(pythonize_path(line)))()
+            module.prompt = f"wsf > {line} > "
+            module.cmdloop()
 
         else:
             self.cp.warning(text=f"*** Module {line} not found!")
 
     def do_show(self, line):
         """Show available modules"""
+        print("\n")
         all_modules()
 
     def do_exit(self, line):
