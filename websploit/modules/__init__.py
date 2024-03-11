@@ -4,7 +4,7 @@ from websploit.core.utils import CPrint
 from websploit.core.utils.module import get_modules, import_exploit, humanize_path
 cp = CPrint()
 
-__all__ = list(module for _, module, _ in pkgutil.iter_modules([os.path.dirname(__file__)]))
+# __all__ = list(module for _, module, _ in pkgutil.iter_modules([os.path.dirname(__file__)]))
 
 
 def all_modules():

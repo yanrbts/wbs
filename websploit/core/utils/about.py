@@ -6,11 +6,11 @@ def about():
     about = f"""{s_color}
     
             Websploit Framework
-            Author : Fardin Allahverdinazhand
+            Author : yanrbts
             Contact : 0x0ptim0us[~A~]Gmail.Com
             Twitter : @0x0ptim0us
             Codename : Reborn
-            Project Github : https://github.com/websploit/websploit
+            Project Github : https://github.com/yanrbts/wbs.git
             Other Projects : https://github.com/0x0ptim0us
             
     {e_color}"""
