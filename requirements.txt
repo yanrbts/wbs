@@ -1,3 +1,7 @@
 scapy
 requests
-
+asyncssh
+asyncio
+termcolor
+argparse
+paramiko

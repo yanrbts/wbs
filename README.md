@@ -28,6 +28,10 @@ install via apt:
 ```bash
 $ apt-get install websploit
 ```
+run source
+```sh
+python3 -m websploit.websploit
+```
 
 Menu
 -----
