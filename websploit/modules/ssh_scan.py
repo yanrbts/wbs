@@ -71,8 +71,14 @@ class Main(base.Module):
                 self.cp.error(text=f"Error reading wordlist file '{pwdfile}': {e}")
                 return
         
+        host = self.parameters.get("host", "").strip('"')
+        if host == "":
+            self.cp.error(text=f"Host address cannot be empty")
+            return
+            
+        
         asyncio.run(self.start_scan(
-            self.parameters["host"],
+            host,
             self.parameters["port"],
             users, pwds
         ))

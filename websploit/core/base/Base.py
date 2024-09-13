@@ -3,15 +3,15 @@ import sys
 from websploit.modules import all_modules, module_list
 from websploit.core.utils import CPrint
 
-completions = [
-    'target',
-    'ip',
-    'gateway',
-    'mac',
-    'iface',
-    'gateway_mac',
-    'target_mac'
-]
+# completions = [
+#     'target',
+#     'ip',
+#     'gateway',
+#     'mac',
+#     'iface',
+#     'gateway_mac',
+#     'target_mac'
+# ]
 
 class Module(cmd.Cmd):
     parameters = {}
