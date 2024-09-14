@@ -1,0 +1,4 @@
+https://github.com/danielmiessler/SecLists.git
+https://github.com/praetorian-inc/Hob0Rules.git
+https://github.com/berzerk0/Probable-Wordlists.git
+https://github.com/k8gege/PasswordDic.git

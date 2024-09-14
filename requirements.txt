@@ -5,3 +5,4 @@ asyncio
 termcolor
 argparse
 paramiko
+GitPython

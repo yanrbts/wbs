@@ -5,46 +5,130 @@ import os.path
 import random
 import re
 import sys
+import git
+import requests
 from io import open
-
 from websploit.core import base
 
 DEFAULT_FOLDER = "wordlist"
-DEFAULT_WORDFILE = "eff-long"
-DEFAULT_DELIMITERS = [" ", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
-                      "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 class Main(base.Module):
     """Password Generation"""
     
     parameters = {
-        "SecLists": "https://github.com/danielmiessler/SecLists.git",
-        "RockYou": "https://github.com/praetorian-inc/Hob0Rules.git",
-        "SkullSecurity Wordlists": "https://github.com/berzerk0/Probable-Wordlists.git",
-        "hashesorg": "https://github.com/rarecoil/hashes.org-list.git",
-        "CustomURLs": ""
+        "link_file": "",  # Path to the txt file containing download links
+        "download_dir": "wordlists"  # Directory where downloads will be saved
     }
     completions = list(parameters.keys())
 
     def do_execute(self, line):
         """Execute current module"""
 
-        if self.validate_options() == False:
+        link_file = self.parameters.get("link_file", "").strip()
+        download_dir = os.path.join(os.getcwd(), self.parameters.get("download_dir", "wordlists"))
+
+        if not os.path.exists(download_dir):
+            os.makedirs(download_dir)
+        
+        if not link_file:
+            self.cp.warning(text="No link file provided.")
             return
+        
+        if not os.path.exists(link_file):
+            self.cp.warning(text=f"Link file not found: {link_file}")
+            return
+        
+        # Read the link file and process each link
+        with open(link_file, 'r') as f:
+            links = f.readlines()
+        
+        for link in links:
+            link = link.strip()
+            if not link:
+                continue
 
+            if link.endswith(".git"):
+                self.cp.info(text=f"Cloning Git repository from {link}...")
 
-    def validate_options(self):
-        """Given a parsed collection of options, performs various validation checks."""
+                try:
+                    repo_name = os.path.basename(link).replace('.git', '')
+                    target_dir = os.path.join(download_dir, repo_name)
+                    if not os.path.exists(target_dir):
+                        try:
+                            # Attempt to clone the repository
+                            git.Repo.clone_from(link, target_dir, progress=self.show_progress)
+                            self.cp.success(text=f"{repo_name} downloaded successfully!")
+                        except git.exc.GitCommandError as e:
+                            # Handle Git-specific errors
+                            self.cp.error(text=f"Git command failed while cloning {repo_name}: {e}")
+                        except Exception as e:
+                            # Handle other potential errors
+                            self.cp.error(text=f"Failed to clone {repo_name}: {e}")
+                    else:
+                        self.cp.info(text=f"{repo_name} already exists, skipping download.")
+                except Exception as e:
+                    self.cp.error(text=f"Unexpected error while processing {repo_name}: {e}")
+            else:
+                self.cp.info(text=f"Downloading file from {link}...")
+                try:
+                    file_name = os.path.basename(link)
+                    target_path = os.path.join(download_dir, file_name)
+                    response = requests.get(link, stream=True)
+                    response.raise_for_status()
+                    
+                    with open(target_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    
+                    self.cp.success(text=f"{file_name} downloaded successfully!")
+                except requests.RequestException as e:
+                    self.cp.error(text=f"Failed to download file from {link}: {e}")
 
-        wordlist = self.parameters.get("wordlist", "").strip('"')
-        if wordlist == "":
-            self.cp.error(text=f"The full path of the password file cannot be empty.")
-            return False
+        # end
+        # download_dir = os.path.join(os.getcwd(), "wordlists")
 
-        if int(self.parameters["maxlength"]) < int(self.parameters["minlength"]):
-            self.cp.error(text=f"Warning: maximum word length less than minimum.")
-            return False
-        return True
+        # if not os.path.exists(download_dir):
+        #     os.makedirs(download_dir)
+
+        # for key, repo_url in self.parameters.items():
+        #     if repo_url:
+        #         self.cp.info(text=f"Downloading {key} from {repo_url}...")
+
+        #         try:
+        #             target_dir = os.path.join(download_dir, key)
+        #             if not os.path.exists(target_dir):
+        #                 try:
+        #                     # Attempt to clone the repository
+        #                     git.Repo.clone_from(repo_url, target_dir, progress=self.show_progress)
+
+        #                     self.cp.success(text=f"{key} downloaded successfully!")
+        #                 except git.exc.GitCommandError as e:
+        #                     # Handle Git-specific errors
+        #                     self.cp.error(text=f"Git command failed while downloading {key}: {e}")
+        #                 except Exception as e:
+        #                     # Handle other potential errors
+        #                     self.cp.error(text=f"Failed to download {key}: {e}")
+        #             else:
+        #                 self.cp.info(text=f"{key} already exists, skipping download.")
+        #         except Exception as e:
+        #             self.cp.error(text=f"Unexpected error while processing {key}: {e}")
+        #     else:
+        #         self.cp.warning(text=f"Skipping {key}, no URL provided.")
+    
+    
+    def show_progress(self, op_code, cur_count, max_count=None, message=''):
+        """Progress callback function"""
+        if max_count:
+            percent = (cur_count / max_count) * 100
+            # self.cp.info(text=f'Progress: {percent:.2f}% ({cur_count}/{max_count})')
+            print(f'\r\033[34;m[𝓲]\033[0m \033[1;96mProgress: {percent:.2f}% ({cur_count}/{max_count})\033[0m', end='', flush=True)
+
+            if cur_count >= max_count:
+                print()
+        else:
+            # self.cp.info(text=f'Progress: {cur_count} objects transferred')
+            print(f'\r\033[34;m[𝓲] \033[0m\033[1;96mProgress: {cur_count} objects transferred\033[0m', end='', flush=True)
+            print()
     
     def locate_wordfile(self, wordfile=None):
         """
