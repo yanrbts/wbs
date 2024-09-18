@@ -39,3 +39,14 @@ def now(format="%Y-%m-%d %H:%M:%S"):
         the date and time of now
     """
     return datetime.datetime.now().strftime(format)
+
+def sort_dictionary(dictionary):
+    etc_flag = "..." in dictionary
+    if etc_flag:
+        del dictionary["..."]
+    sorted_dictionary = {}
+    for key in sorted(dictionary):
+        sorted_dictionary[key] = dictionary[key]
+    if etc_flag:
+        sorted_dictionary["..."] = {}
+    return sorted_dictionary

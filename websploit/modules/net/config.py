@@ -2,7 +2,8 @@ import inspect
 from functools import lru_cache
 from pathlib import Path
 
-from .net.core.utils.common import now, generate_random_token
+from websploit.modules.net import version
+from websploit.modules.net.core.utils.common import now, generate_random_token
 
 CWD = Path.cwd()
 PACKAGE_PATH = Path(__file__).parent
