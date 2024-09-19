@@ -1,7 +1,9 @@
 from multiprocessing import Process, Manager, Pool
 import urllib.parse, ssl
+import re
 import sys, random, time, os
 import http.client
+import traceback
 from websploit.core import base
 from websploit.core.utils import CPrint
 
@@ -93,8 +95,9 @@ class ddos(object):
 
                 self.workersQueue.append(worker)
                 worker.start()
-            except Exception:
-                self.log.error(text=f"Failed to start worker {0}".format(i))
+            except Exception as e:
+                self.log.error(text=f"Failed to start worker {i}, err: {e}")
+                self.log.error(traceback.format_exc()) 
                 pass
 
         self.log.info(text=f"Initiating monitor")
@@ -103,7 +106,7 @@ class ddos(object):
     def stats(self):
         try:
             if self.counter[0] > 0 or self.counter[1] > 0:
-                self.log.info(text=f"{0} DDOS strikes hit. ({1} Failed)".format(self.counter[0], self.counter[1]))
+                self.log.info(text=f"{self.counter[0]} DDOS strikes hit. ({self.counter[1]} Failed)")
 
                 if (self.counter[0] > 0 
                     and self.counter[1] > 0 
@@ -131,6 +134,7 @@ class ddos(object):
 
                 for worker in self.workersQueue:
                     try:
+                        self.log.info(text=f"Killing worker {worker.name}")
                         worker.stop()
                     except Exception:
                         pass
@@ -201,9 +205,8 @@ class Striker(Process):
         return out_str
     
     def run(self):
-        self.log.info(text=f"Starting worker {0}".format(self.name))
-        self.log.info(text=f"worker host {0}:{1}".format(self.host, self.port))
-        
+        self.log.info(text=f"Starting worker {self.name}")
+
         while self.runnable:
             try:
                 for i in range(self.nr_socks):
@@ -234,7 +237,7 @@ class Striker(Process):
                 self.incFailed()
                 pass
         
-        self.log.info(text=f"Worker {0} completed run. Sleeping...".format(self.name))
+        self.log.info(text=f"Worker {self.name} completed run. Sleeping...")
 
     def closeConnections(self):
         for conn in self.socks:
@@ -424,9 +427,9 @@ class Main(base.Module):
     def do_execute(self, line):
         useragents = []
 
-        url = self.parameters.get("url", "").split('"')
-        if url == "" or url == None:
-            self.cp.error(text=f"The Url parameter Cannot be empty.")
+        url = self.parameters.get("url", "").strip()
+        if not self.is_valid_url(url):
+            self.cp.error(text=f"The Not a valid URL.")
             return
 
         workers = self.parameters.get("workers", "10")
@@ -449,7 +452,7 @@ class Main(base.Module):
             return
         
         # check useragents
-        useragents_file = self.parameters.get("useragents", "").strip('"')
+        useragents_file = self.parameters.get("useragents", "").strip()
         try:
             with open(useragents_file) as f:
                 useragents = f.readlines()
@@ -459,13 +462,13 @@ class Main(base.Module):
             self.cp.error(text=f"Error reading useragents file '{useragents_file}': {e}")
         
         # check method
-        method = self.parameters.get("method", "get").strip('"')
+        method = self.parameters.get("method", "get").strip()
         if method not in ["get", "post", "random"]:
             self.cp.error(text=f"Invalid 'method' parameter. It must be 'get' or 'post'.")
             return
 
         # check ssl 
-        sslcheck = self.parameters.get("sslcheck", "1").strip('"')
+        sslcheck = self.parameters.get("sslcheck", "1").strip()
         if sslcheck not in ["0", "1"]:
             self.cp.error(text=f"Invalid 'sslcheck' parameter. It must be '0' or '1'.")
             return
@@ -487,5 +490,28 @@ class Main(base.Module):
         except Exception as e:
             self.cp.error(text=f"DDOS execution anomaly.")
             return
+    
+    def is_valid_url(self, url):
+        """
+        Check if the given URL is valid.
+
+        Args:
+            url (str): The URL to validate.
+
+        Returns:
+            bool: True if the URL is valid, False otherwise.
+        """
+        # Regular expression for validating URLs
+        url_regex = re.compile(
+            r'^(https?|ftp)://'                                # http://, https://, ftp://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'  # Domain
+            r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'             # Domain extension
+            r'localhost|'                                      # localhost
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'            # IPv4
+            r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'                    # IPv6
+            r'(?::\d+)?'                                      # Port (optional)
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)                 # Path and query
+
+        return re.match(url_regex, url) is not None
 
         
