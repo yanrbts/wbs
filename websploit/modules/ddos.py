@@ -80,10 +80,7 @@ class ddos(object):
     
     def fire(self):
         self.log.info(
-            text=f"Hitting webserver in mode '{0}' with {1} workers running {2} connections each.".format(
-                self.method, 
-                self.nr_workers, 
-                self.nr_sockets)
+            text=f"Hitting webserver in mode '{self.method}' with {self.nr_workers} workers running {self.nr_sockets} connections each."
             )
         
         # Start workers
